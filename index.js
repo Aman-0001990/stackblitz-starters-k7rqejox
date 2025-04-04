@@ -1,15 +1,36 @@
+// index.js
 const express = require('express');
-const { resolve } = require('path');
+const bcrypt = require('bcrypt');
+const User = require('./models/User');
 
 const app = express();
-const port = 3010;
+app.use(express.json());
 
-app.use(express.static('static'));
+app.get('/',async (req,res) => {
+  return res.json("Hello world")
+})
 
-app.get('/', (req, res) => {
-  res.sendFile(resolve(__dirname, 'pages/index.html'));
+app.post('/register', async (req, res) => {
+  const { username, email, password } = req.body;
+
+  if (!username || !email || !password) {
+    return res.status(400).json({ error: 'All fields are required.' });
+  }
+
+  try {
+   
+ const salt=await bcrypt.genSalt(10)
+const hashedPassword=await bcrypt.hash(password,salt);
+     const newUser = new User({ username, email, password: hashedPassword });
+    await newUser.save();
+
+    res.status(201).json({ success: true, message: 'User registered successfully.' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: 'Server error.' });
+  }
 });
 
-app.listen(port, () => {
-  console.log(`Example app listening at http://localhost:${port}`);
-});
+ 
+const PORT = 3000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
